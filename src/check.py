@@ -37,6 +37,7 @@ def main(
 
         for model_name in model_list:
             model_path = model_name.replace('/', '_')
+            scores[pi][model_name] = {}
             os.makedirs(f"check_results/{pi}/{model_path}", exist_ok=True)
             for subset in subsets:
                 df_result = pd.read_csv(os.path.join("results", model_path, pi, f"{subset}.csv"))
