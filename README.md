@@ -80,7 +80,7 @@ max_tokens: 8192
 reasoning: false
 
 # Evaluation dataset subsets & prompts
-subsets: [GSM8K, MATH, OMIN_MATH, MMMLU, KSM]
+subsets: [GSM8K, MATH, OMNI_MATH, MMMLU, KSM]
 prompt_id: [ko]         # Korean(ko) and English(en) are supported!
 score_type: [original]    # or math_verify (math_verify does not work well on `MMMLU` subset)
 ```
