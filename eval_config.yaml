@@ -1,0 +1,16 @@
+# Evaluation model list
+models:
+  - MODEL_1
+  - MODEL_2
+  - MODEL_3
+
+# Generation parameters
+temperature: 0.0
+top_p: 0.95             # This value will be ignored when `temperature` set to 0.0
+max_tokens: 8192
+reasoning: false        # The key to trigger the long thinking mode of language model (e.g., Qwen3 series)
+
+# Evaluation dataset subsets & prompts
+subsets: [GSM8K, MATH, OMIN_MATH, MMMLU, KSM]
+prompt_id: [ko]         # Korean(ko) and English(en) are supported!
+score_type: [original]    # or math_verify (math_verify does not work well on `MMMLU` subset)
