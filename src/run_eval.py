@@ -29,30 +29,29 @@ def main(
         p: float,
         max_tokens: int
 ):
-    # Load datasets
     dfs = {subset: pd.DataFrame(load_dataset('HAERAE-HUB/HRM8K', subset)['test']) for subset in subsets}
 
-    for model_name in model_list:
-        model_path = model_name.replace('/', '_')
-    
-        os.makedirs(f"results/{model_path}", exist_ok=True)
-        os.makedirs(f"score_results/{model_path}", exist_ok=True)
+    for pi in prompt_id:
+        os.makedirs(f"results/{pi}", exist_ok=True)
+        os.makedirs(f"score_results/{pi}", exist_ok=True)
 
-        for pi in prompt_id:
-            os.makedirs(f"results/{model_path}/{pi}", exist_ok=True)
+        for model_name in model_list:
+            model_path = model_name.replace('/', '_')
+            os.makedirs(f"results/{pi}/{model_path}", exist_ok=True)
+            os.makedirs(f"score_results/{pi}/{model_path}", exist_ok=True)
             print(f"{model_name} - {prompt_id} Evaluation is starting..")
 
             results = generate_solution(pi, model_name, reasoning, temperature, p, max_tokens, dfs)
             for k in results.keys():
-                results[k].to_csv(f"results/{model_path}/{pi}/{k}.csv", index=False)
+                results[k].to_csv(f"results/{pi}/{model_path}/{k}.csv", index=False)
                 
-            scores = scoring_func(score_type, pi, f"results/{model_path}/{pi}")
+            scores = scoring_func(score_type, pi, f"results/{pi}/{model_path}")
             print("----------------------- Score Board -----------------------")
             for key in scores.keys():
                 print(f"{key}: {scores[key]}")
             print("-----------------------------------------------------------")
             
-            with open(f"score_results/{model_path}/{pi}.json", "w") as f:
+            with open(f"score_results/{pi}/{model_path}.json", "w") as f:
                 json.dump(scores, f, indent=4)
 
 
