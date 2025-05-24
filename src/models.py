@@ -1,4 +1,3 @@
-from vllm import LLM, SamplingParams
 import torch
 import os
 
@@ -96,6 +95,8 @@ thinking_model_list = [
 ]
     
 def load_model(model_name, temperature, p, max_tokens):
+    from vllm import LLM, SamplingParams
+    
     if "exaone" in model_name.lower():
         os.environ["VLLM_USE_V1"] = "0"
     else:
