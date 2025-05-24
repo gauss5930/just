@@ -9,7 +9,7 @@ def load_config(
 
 
 if __name__ == "__main__":
-    args = load_config("eval_config-Copy1.yaml")
+    args = load_config("eval_config.yaml")
     
     success_list, fail_dict = [], {}
 
