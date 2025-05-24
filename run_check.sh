@@ -1,1 +1,1 @@
-python src/check.py
+python src/check.py --check_type "all"

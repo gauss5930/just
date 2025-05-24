@@ -1,8 +1,8 @@
 import os
-import argparse
 from score import scoring_func
 from generate import generate_solution
 from datasets import load_dataset
+from models import thinking_model_list
 from typing import List
 import pandas as pd
 import yaml
@@ -17,6 +17,16 @@ def load_config(
 ):
     with open(path, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)
+    
+
+def thinking_model_check(model_name, pi, reasoning, thinking_model_list=thinking_model_list):
+    for model in thinking_model_list:
+        if model_name in model:
+            if reasoning == True:
+                return pi + "_reasoning"
+            else:
+                return pi
+    return pi
 
 
 def main(
@@ -31,14 +41,13 @@ def main(
 ):
     dfs = {subset: pd.DataFrame(load_dataset('HAERAE-HUB/HRM8K', subset)['test']) for subset in subsets}
 
-    for pi in prompt_id:
-        os.makedirs(f"results/{pi}", exist_ok=True)
-        os.makedirs(f"score_results/{pi}", exist_ok=True)
-
+    for p in prompt_id:
         for model_name in model_list:
+            pi = thinking_model_check(model_name, p, reasoning)
             model_path = model_name.replace('/', '_')
+            os.makedirs(f"results/{pi}", exist_ok=True)
+            os.makedirs(f"score_results/{pi}", exist_ok=True)
             os.makedirs(f"results/{pi}/{model_path}", exist_ok=True)
-            os.makedirs(f"score_results/{pi}/{model_path}", exist_ok=True)
             print(f"{model_name} - {prompt_id} Evaluation is starting..")
 
             results = generate_solution(pi, model_name, reasoning, temperature, p, max_tokens, dfs)

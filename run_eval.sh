@@ -6,4 +6,4 @@ export OPENAI_API_KEY="<OPENAI_API_KEY>"
 python src/run_eval.py
 
 # Evaluation result check code
-python src/check.py
+python src/check.py --check_type "config"

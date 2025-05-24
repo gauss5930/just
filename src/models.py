@@ -83,6 +83,17 @@ litellm_models = [
     'o1-preview-2024-09-12',
     'o1-preview'
 ]
+
+thinking_model_list = [
+    "Qwen/Qwen3-0.6B",
+    "Qwen/Qwen3-1.7B",
+    "Qwen/Qwen3-4B",
+    "Qwen/Qwen3-8B",
+    "Qwen/Qwen3-14B",
+    "Qwen/Qwen3-32B",
+    "Qwen/Qwen3-30B-A3B",
+    "Qwen/Qwen3-235B-A22B"
+]
     
 def load_model(model_name, temperature, p, max_tokens):
     if "exaone" in model_name.lower():
