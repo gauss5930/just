@@ -5,6 +5,7 @@ import json
 import yaml
 from typing import List
 import argparse
+from tqdm.auto import tqdm
 
 
 def load_config(
@@ -24,28 +25,30 @@ def check_func(
     
 
 def result_check(
+        prompt_id: str,
         subsets: List[str]
 ):
     sub_scores = {}
-    for subs in subsets:
+    for subs in tqdm(subsets):
         subset = subs.split("/")[-1].replace(".csv", "")
         df_result = pd.read_csv(subs)
         checks = []
         if subset in ["GSM8K", "MATH", "OMNI_MATH"]:
             score = sum([1 for _,row in df_result.iterrows() if any([answer_in_last_sentence(row.solution,row.answer), parse_boxed_value(row.solution,row.answer)])]) / len(df_result) * 100
-            for _,row in df_result.iterrows():
+            for _,row in tqdm(df_result.iterrows(), total=len(df_result)):
                 checks.append(check_func(any([answer_in_last_sentence(row.solution, row.answer), parse_boxed_value(row.solution, row.answer)])))
         elif subset == "MMMLU":
             score = sum([1 for _,row in df_result.iterrows() if any([parse_mcqa_value(row.question,row.solution,row.answer)])]) / len(df_result) * 100
-            for _,row in df_result.iterrows():
+            for _,row in tqdm(df_result.iterrows(), total=len(df_result)):
                 checks.append(check_func(parse_mcqa_value(row.question, row.solution, row.answer)))
         elif subset == "KSM":
-            score = sum([1 for _,row in df_result.iterrows() if parse_ksm_value(row.question,row.solution,row.answer)]) / len(df_result) * 100
-            for _,row in df_result.iterrows():
-                checks.append(check_func(parse_ksm_value(row.question, row.solution, row.answer)))
+            score = sum([1 for _,row in df_result.iterrows() if parse_ksm_value(row.original,row.solution,row.original_answer)]) if prompt_id == "en" else sum([1 for _,row in df_result.iterrows() if parse_ksm_value(row.question,row.solution,row.answer)])
+            score = score / len(df_result) * 100
+            for _,row in tqdm(df_result.iterrows(), total=len(df_result)):
+                checks.append(check_func(parse_ksm_value(row.question, row.solution, row.answer)) if prompt_id == "en" else check_func(parse_ksm_value(row.question, row.solution, row.answer)))
         sub_scores[subset] = score
         df_result["check"] = checks
-        df_result.to_csv(os.path.join("check_result", "/".join([subs.split("/")[1:-1]]), f"{subset}_check.csv"), index=False)
+        df_result.to_csv(os.path.join("check_results", "/".join(subs.split("/")[1:-1]), f"{subset}_check.csv"), index=False)
 
     return sub_scores
 
@@ -67,8 +70,10 @@ def main(
         os.makedirs(f"check_results/{pi}", exist_ok=True)
         model_list = model_list if check_type == "config" else os.listdir(f"results/{pi}")
         for model_name in model_list:
-            subsets = subsets if check_type == "config" else [os.path.join(f"results/{pi}", f) for f in os.listdir(f"results/{pi}") if ".csv" in f]
-            scores[pi][model_name] = result_check(subsets)
+            model_path = model_name.replace("/", "_")
+            os.makedirs(f"check_results/{pi}/{model_path}", exist_ok=True)
+            subsets = [f"results/{pi}/{model_path}/{s}.csv" for s in subsets] if check_type == "config" else [os.path.join(f"results/{pi}/{model_path}", f) for f in os.listdir(f"results/{pi}/{model_path}") if ".csv" in f]
+            scores[pi][model_name] = result_check(pi, subsets)
 
     with open(f"check_score.json", "w") as f:
         json.dump(scores, f, indent=4)

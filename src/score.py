@@ -3,10 +3,12 @@ import pandas as pd
 import os
 import re
 from collections import Counter
-from jinja2.exceptions import TemplateError
 from latex2sympy2_extended import latex2sympy
 from sympy import latex, simplify
-from prompts import prompts
+import signal
+
+def _timeout_handler(signum, frame):
+    raise TimeoutError
 
 def check_duplication(input_str, thres=10):
     count = dict(Counter(input_str.split()))
@@ -87,16 +89,34 @@ def parse_mcqa_value(question, text, answer):
     answer_choice, answer_content = mcqa_formatting(question, answer)
 
     return any([answer_in_last_sentence(text, answer_choice), parse_boxed_value(text, answer_choice), parse_boxed_content_value(text, answer_content)])
-                
+
+def safe_latex_equal(a: str, b: str, timeout_sec: int = 2) -> bool:
+    signal.signal(signal.SIGALRM, _timeout_handler)
+    signal.alarm(timeout_sec)
+    try:
+        result = latex_expressions_equal(a, b)
+    except TimeoutError:
+        result = False
+    except Exception:
+        result = False
+    finally:
+        signal.alarm(0)
+    return result
+
 def parse_ksm_value(question, text, answer):
-    if ("1." in question) and ("2." in question) and ("3." in question) and ("4." in question):
+    if all(tag in question for tag in ["1.", "2.", "3.", "4."]):
         return parse_mcqa_value(question, text, answer)
-    else:
-        try:
-            answer = float(answer)
-            return any([answer_in_last_sentence(text, answer), parse_boxed_value(text, answer)])
-        except:
-            return parse_boxed_content_value(text, answer)
+    try:
+        answer_f = float(answer)
+        return any([answer_in_last_sentence(text, answer_f), parse_boxed_value(text, answer_f)])
+    except ValueError:
+        match = re.search(r'\\boxed\{([a-zA-Z0-9가-힣\=\+\-\*/\^\_\(\)\{\}\[\]\\ ]+)\}', str(text))
+        if not match:
+            return False
+        else:
+            boxed = match.group(1)
+            return any([str(answer) == boxed, safe_latex_equal(boxed, str(answer))])
+
 
 def scoring_func(score_type, prompt_id, output_path):
     file_list = [os.path.join(output_path, f) for f in os.listdir(output_path) if ".csv" in f]
